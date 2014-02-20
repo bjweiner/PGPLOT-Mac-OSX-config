@@ -1,0 +1,219 @@
+<html>
+<title>
+Compiling PGPLOT on Mac OS X
+</title>
+<body>
+<h2>
+Compiling PGPLOT on Mac OS X 
+</h2>
+<h3>
+a guide for the perplexed
+</h3>
+<p>
+
+Benjamin Weiner, May 2012
+<p>
+
+<h3>PGPLOT</h3>
+<a href="http://www.astro.caltech.edu/~tjp/pgplot/">PGPLOT</a>
+is a library of plotting subroutines written by Tim Pearson,
+callable from Fortran and C,
+that have been used in a variety of astronomy programs, and
+some other software packages.
+PGPLOT
+is free for non-commercial use and downloadable as source.
+Although a new version has not appeared for some time, it is 
+convenient, flexible, and many people and
+a number of useful programs depend on it.
+<p>
+
+<h3>OS X issues</h3>
+Historically you typically installed PGPLOT by either compiling
+from source or installing a software package that included
+a compiled library (libpgplot.a) and various other stuff like
+fonts.  This used to be fairly easy on Linux or Mac, but
+starting around OS X 10.6 and/or 64-bit CPU Macs, I and other
+people had difficulty compiling PGPLOT on OS X.  Typically
+one gets an error message like: <tt>/usr/bin/ranlib: archive member:
+libpgplot.a(grdate.o) cputype (16777223) does not match previous
+archive members cputype (7) (all members must match)</tt>.
+<p>
+
+If you google
+around you can find lots of puzzled people, and a number of web
+pages that suggest workarounds (not all of which are specifically
+for 10.6; none have solved the
+problem for me).  I've diagnosed the issue and provide here
+a couple of configuration files which you can add to a regular
+PGPLOT source distribution so it will compile correctly.
+<p>
+
+<h3>Instructions for fixing and installing PGPLOT</h3>
+
+<ul>
+  <li> You will need a gcc compiler - Apple's gcc compiler is
+  known to work and is installed with Xcode -
+  and your favorite Fortran compiler, either g77 or gfortran.
+  If you don't have the compilers installed look at <a href="http://hpc.sourceforge.net">http://hpc.sourceforge.net</a>.
+  <li> <a href="http://www.astro.caltech.edu/~tjp/pgplot/install.html">Download
+  PGPLOT</a> from Tim Pearson's site.
+  <li> Make the parent source directory, e.g. <tt>sudo mkdir
+  /usr/local/src</tt>  
+  <li> cd to this parent source directory, e.g. <tt>cd /usr/local/src</tt> , copy PGPLOT distribution there and untar it, which will create a <tt>pgplot/</tt> subdirectory:
+  <tt> sudo tar zxvf pgplot5.2.tar.gz</tt>
+  <li> <strong>NEW STEP:</strong> download a tar archive of my config files <a href="pgplot_macosx_conf.tar">pgplot_macosx_conf.tar</a>
+  and untar them in the <tt>/usr/local/src/pgplot</tt> directory: <tt>cd /usr/local/src/pgplot ; sudo tar
+  xvf pgplot_macosx_conf.tar</tt>.  This will make a subdirectory
+  called <tt>sys_macosx</tt> with three configuration files.
+
+  <li> make a directory in which to compile the library, e.g. <tt>sudo mkdir
+  /usr/local/lib/pgplot</tt>
+  <li> cd to this compilation directory, e.g. <tt> cd /usr/local/lib/pgplot</tt>
+  <li> choose device drivers: <tt>sudo cp
+  /usr/local/src/pgplot/drivers.list /usr/local/lib/pgplot</tt>
+  <li> edit drivers.list to uncomment the drivers you want (remove
+  the ! at the beginning of each desired line). I
+  recommend /GIF, /NULL, /PS, /VPS, /CPS, /VCPS, /XTERM, /XWINDOW, and
+  /XSERVE.  Trying /PNG or /TPNG will cause a compilation failure; a
+  note on how to fix this is below.
+  <li> run the makemake configuration script using one of my new config files:
+  choose one depending on whether you will compile other programs with
+  g77 or gfortran and in 32 or 64 bit.
+  <dl>
+    <dd>EITHER: <tt>sudo /usr/local/src/pgplot/makemake /usr/local/src/pgplot macosx
+  g77_gcc_32</tt>
+    <dd>OR: <tt>sudo /usr/local/src/pgplot/makemake /usr/local/src/pgplot macosx
+ gfortran_gcc_32</tt>
+    <dd>OR: <tt>sudo /usr/local/src/pgplot/makemake /usr/local/src/pgplot macosx
+ gfortran_gcc_64</tt>
+ </dl>
+  <li>Compile the library and demo programs: <tt> sudo make all</tt>
+  <li>If you have a problem compiling the demo programs, you can skip
+  them and just make the libraries with <tt> sudo make lib grfont.dat pgplot.doc
+  pgxwin_server</tt> , but this should not usually
+ happen.
+ <li>If you mess up at some point and want to start over, in the
+  library directory do a <tt>sudo make clean ; sudo rm libpgplot.a
+  </tt>.  This will remove any intermediate partially-compiled libraries.
+</ul>
+
+You now have a library, <tt>libpgplot.a</tt>.  
+<p>
+
+<h3>Compiling and running programs</h3>
+
+To compile
+programs using it, link to <tt>/usr/local/lib/pgplot/libpgplot.a
+/usr/X11/lib/libX11.dylib</tt>   
+<p>
+For example <tt>g77 -o myprog myprog.f /usr/local/lib/pgplot/libpgplot.a
+/usr/X11/lib/libX11.dylib</tt> 
+<p>
+
+To run programs with PGPLOT, don't forget to set the environment
+variable <tt>PGPLOT_DIR</tt> to the library directory.  Otherwise it
+can't find the fonts at runtime.  This is best done in a startup file
+like .bash_profile or .cshrc, for example for bash: <tt>export PGPLOT_DIR=/usr/local/lib/pgplot</tt> ; and for csh: <tt> setenv PGPLOT_DIR /usr/local/lib/pgplot</tt>
+<p>
+
+You must use the same compiler for
+your program that you used for the library: g77 OR gfortran.  You
+could compile PGPLOT libraries with the two compilers in two different
+directories and use one or the other as needed.
+<p>
+
+The /xs device should work when run from a mac Terminal, but /xt
+won't.  /xt will work when run from an xterm under X11.
+<p>
+
+If you want to get the /PNG driver to work, uncomment it in
+drivers.list, and after running makemake and
+before compiling, edit the makefile to comment out the following line:
+<tt>pndriv.o : ./png.h ./pngconf.h ./zlib.h ./zconf.h</tt> . This has
+an incorrect location for the PNG library header files which causes
+compilation to fail.
+<p>
+
+<h3>Why this works</h3>
+
+Mac OS X for 64-bit machines allows you to run 32 or 64 bit
+binaries.  But the inexplicable error message from ranlib above is
+complaining that it can't mix object files compiled for 32 bit cputype
+(i386) and 64 bit (x86_64) into a single object library archive, the
+libpgplot.a file.
+<p>
+
+The problem is that PGPLOT source is actually a mix of Fortran and
+C. The Fortran compilers compile into 32-bit by default (g77
+is only 32 bit capable) and the C compiler now compiles into 64 bit by
+default.  So ranlib has to mix 32 and 64 bit object files and it can't
+do that.  This is why it only became a problem with 64 bit Macs and
+OS X 10.6.  The new config files force the C compiler to compile in 32
+bit with the "-m32" option.  So then the files are all 32-bit
+and it compiles ok.  For 64 bit the config file forces gfortran to
+compile in 64 bit with "-m64".
+
+With Apple's C compiler you can also use "-arch i386" and "-arch
+x86_64" to force 32 or 64 bit.  The "-m32" and "-m64" options should
+work with a non-Apple gcc, although I have not tested them.
+<p>
+
+Other notes: I have not tested all the 
+more exotic drivers and library locations, and if you do something arcane like use a
+PGPLOT-Tk interface, it may require adjustment.
+See above for how to get the PNG driver to work by editing the makefile.<p>
+
+I tested this on OS X 10.6 Snow Leopard, and have not tested PGPLOT on OS X 10.7 Lion myself, although users have reported it working on later OSes including Mavericks.  I have a report
+that forcing the 64-bit option by using a configuration similar to
+"gfortran_gcc_64" will work, so try that.
+<p>
+
+<h4>Where to get compilers</h4>
+
+Apple's gcc C compiler comes with Xcode, their development kit.  Xcode
+was on my OS X install CDs, but is not installed by default.  You can
+also download it from Apple.
+<p>
+
+Mac OS X versions of gfortran, g77, and non-Apple versions of gcc 
+can be downloaded from <a
+href="http://hpc.sourceforge.net/">http://hpc.sourceforge.net/</a>.
+The HPC page does not have quick links to binaries of the compilers
+for older versions of Mac OS X, but they are in the file tree at
+<a href="http://sourceforge.net/projects/hpc/files/hpc/">http://sourceforge.net/projects/hpc/files/hpc/</a>. Some other useful information about <a href="http://www.microscopy.cen.dtu.dk/computing/fortran/index.html">Fortran and Mac is listed here</a>.
+
+<p>
+
+<h3>Contact: </h3>
+<p>
+
+<a href="../software/">My software page</a>.
+<p>
+
+<a href="../">Back to my home page</a>.
+<p>
+
+
+Benjamin Weiner, email <tt> bjw </tt> at
+<tt> as.arizona.edu </tt>
+<p>
+29 May 2012, updated 6 June 2012, 10 April 2013
+<p>
+
+<!-- Start of StatCounter Code -->
+<script type="text/javascript">
+var sc_project=4378924; 
+var sc_invisible=1; 
+var sc_partition=55; 
+var sc_click_stat=1; 
+var sc_security="9fcb0399"; 
+</script>
+
+<script type="text/javascript" src="http://www.statcounter.com/counter/counter.js"></script><noscript><div class="statcounter"><a title="hit counter" href="http://www.statcounter.com/free_hit_counter.html" target="_blank"><img class="statcounter" src="http://c.statcounter.com/4378924/0/9fcb0399/1/" alt="hit counter" ></a></div></noscript>
+<!-- End of StatCounter Code -->
+
+</body>
+</html>
+
+
+
