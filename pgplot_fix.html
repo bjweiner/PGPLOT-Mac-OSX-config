@@ -92,12 +92,15 @@ PGPLOT source distribution so it will compile correctly.
   them and just make the libraries with <tt> sudo make lib grfont.dat pgplot.doc
   pgxwin_server</tt> , but this should not usually
  happen.
+ <li>If you need the library <tt>libcpgplot.a</tt> for compatibility with C programs, you can make it with <tt>sudo make cpg</tt>.
  <li>If you mess up at some point and want to start over, in the
   library directory do a <tt>sudo make clean ; sudo rm libpgplot.a
   </tt>.  This will remove any intermediate partially-compiled libraries.
 </ul>
 
-You now have a library, <tt>libpgplot.a</tt>.  
+You now have a library, <tt>libpgplot.a</tt>.
+<p>
+If you ran <tt>sudo make cpg</tt> you will also have <tt>libcpgplot.a</tt>.
 <p>
 
 <h3>Compiling and running programs</h3>
@@ -132,6 +135,18 @@ before compiling, edit the makefile to comment out the following line:
 <tt>pndriv.o : ./png.h ./pngconf.h ./zlib.h ./zconf.h</tt> . This has
 an incorrect location for the PNG library header files which causes
 compilation to fail.
+<p>
+
+If for some reason you need to make the <tt>libpgplot.so</tt> shared object 
+(dynamically loaded) library, you should be able to do this by uncommenting
+the lines in the .conf file (gfortran_gcc_32.conf or similar)
+that read <tt>SHARED_LIB="libpgplot.so"</tt> and <tt>SHARED_LD="gcc -shared  -o $SHARED_LIB"</tt>, before running the "makemake" step.
+<p>
+
+<h3>Configuration files on github</h3>
+
+The new configuration files and these instructions are also available
+from <a href="https://github.com/bjweiner/PGPLOT-Mac-OSX-config">my github page for PGPLOT configuration</a>. You can fork them or issue a pull request if you have modifications.
 <p>
 
 <h3>Why this works</h3>
@@ -197,7 +212,7 @@ for older versions of Mac OS X, but they are in the file tree at
 Benjamin Weiner, email <tt> bjw </tt> at
 <tt> as.arizona.edu </tt>
 <p>
-29 May 2012, updated 6 June 2012, 10 April 2013
+29 May 2012, updated 6 June 2012, 10 April 2013, 18 Nov 2014
 <p>
 
 <!-- Start of StatCounter Code -->
